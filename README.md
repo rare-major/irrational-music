@@ -6,7 +6,7 @@ deterministic function of *(which number, which digit offset)*. Same inputs,
 same piece, every time. Slide the offset and you're listening to a different,
 never-repeating stretch of that number's expansion.
 
-**[▶ Live demo](#)** — replace with your GitHub Pages URL once it's live (see below)
+**[▶ Live demo]([#](https://rare-major.github.io/irrational-music/))** — replace with your GitHub Pages URL once it's live (see below)
 
 Two ways to use it, same underlying idea:
 

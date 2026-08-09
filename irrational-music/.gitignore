@@ -1,0 +1,17 @@
+# generated output (don't commit rendered pieces)
+*.wav
+*.mid
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS clutter
+.DS_Store
+Thumbs.db
+
+# editor
+.vscode/
+.idea/

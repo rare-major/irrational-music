@@ -280,7 +280,7 @@
         if (velHist.length > 4) velHist.shift();
         const velocity = Math.round(velHist.reduce((a, b) => a + b, 0) / velHist.length);
 
-        yield { kind: 'melody', startBeat: t, durBeat: dur * 0.95, pitch, velocity };
+        yield { kind: 'melody', startBeat: t, durBeat: dur * 0.95, pitch, velocity, digits: [degDigit, octDigit] };
 
         if (i % this.chordEvery === 0) {
           const chordIdx = Math.floor(i / this.chordEvery) % PROGRESSION.length;
@@ -368,26 +368,64 @@
   const TEMPLATE = `
     <style>
       :host {
-        --im-bg: #11181a;
-        --im-panel: #17201f;
-        --im-line: #2a3436;
-        --im-amber: #ffb238;
-        --im-amber-dim: #7a5a26;
-        --im-text: #dbe4e2;
-        --im-text-dim: #83908e;
+        /* === RETRO (default): green phosphor CRT === */
+        --im-bg: #000;
+        --im-panel: #060606;
+        --im-line: #1a3d1a;
+        --im-amber: #39ff14;
+        --im-amber-dim: #0b330b;
+        --im-text: #2ddd2d;
+        --im-text-dim: #156615;
+        --im-radius: 0px;
+        --im-panel-radius: 3px;
         all: initial;
         display: block;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         color: var(--im-text);
         max-width: 560px;
+      }
+      :host([data-theme="minimal"]) {
+        /* === MINIMAL: light, clean, sans-serif === */
+        --im-bg: #f5f4f0;
+        --im-panel: #ffffff;
+        --im-line: #e0dcd6;
+        --im-amber: #1a1a18;
+        --im-amber-dim: #c0bdb6;
+        --im-text: #1a1a18;
+        --im-text-dim: #888480;
+        --im-radius: 6px;
+        --im-panel-radius: 16px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       }
       .panel {
         background: var(--im-panel);
         border: 1px solid var(--im-line);
-        border-radius: 12px;
+        border-radius: var(--im-panel-radius);
         padding: 18px 20px 16px;
-        box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.35);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
       }
+      :host(:not([data-theme="minimal"])) .panel {
+        box-shadow: 0 0 0 1px #1a3d1a, 0 0 40px rgba(57,255,20,0.05), inset 0 0 80px rgba(0,0,0,0.55);
+      }
+      /* ── tabs ─────────────────────────────────────────────── */
+      .tabs {
+        display: flex; gap: 0;
+        margin-bottom: 16px;
+        border-bottom: 1px solid var(--im-line);
+      }
+      .tab {
+        background: transparent; border: none;
+        border-bottom: 2px solid transparent;
+        padding: 5px 12px 6px; margin-bottom: -1px;
+        font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase;
+        color: var(--im-text-dim); cursor: pointer; font-family: inherit;
+        transition: color 0.15s, border-color 0.15s;
+      }
+      .tab.active { color: var(--im-amber); border-bottom-color: var(--im-amber); }
+      :host(:not([data-theme="minimal"])) .tab.active {
+        text-shadow: 0 0 8px rgba(57,255,20,0.55);
+      }
+      /* ── eyebrow ──────────────────────────────────────────── */
       .eyebrow {
         display: flex; align-items: baseline; justify-content: space-between;
         margin-bottom: 12px;
@@ -401,22 +439,48 @@
         font-size: 12px; color: var(--im-amber);
         min-width: 90px; text-align: right;
       }
+      :host(:not([data-theme="minimal"])) .eyebrow .now {
+        text-shadow: 0 0 8px rgba(57,255,20,0.5);
+      }
+      /* ── digit tape ───────────────────────────────────────── */
       .tape {
         background: var(--im-bg);
         border: 1px solid var(--im-line);
-        border-radius: 8px;
+        border-radius: var(--im-radius);
         padding: 10px 12px;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 15px; letter-spacing: 0.12em;
         color: var(--im-amber-dim);
         overflow: hidden; white-space: nowrap;
         margin-bottom: 14px;
-        box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
       }
-      .tape .cur { color: var(--im-amber); text-shadow: 0 0 8px rgba(255,178,56,0.55); }
-      .row {
-        display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+      .tape .cur { color: var(--im-amber); }
+      :host(:not([data-theme="minimal"])) .tape .cur {
+        text-shadow: 0 0 10px rgba(57,255,20,0.7);
       }
+      /* ── visualiser ───────────────────────────────────────── */
+      .viz-wrap { position: relative; margin-bottom: 14px; }
+      .viz {
+        width: 100%; height: 80px; display: block;
+        border-radius: var(--im-radius);
+        background: var(--im-bg);
+        border: 1px solid var(--im-line);
+        box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
+      }
+      .viz-scan {
+        position: absolute; inset: 0; pointer-events: none;
+        border-radius: var(--im-radius);
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent 0px, transparent 2px,
+          rgba(0,0,0,0.18) 2px, rgba(0,0,0,0.18) 3px
+        );
+        display: none;
+      }
+      :host(:not([data-theme="minimal"])) .viz-scan { display: block; }
+      /* ── controls ─────────────────────────────────────────── */
+      .row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
       .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 90px; }
       .field label {
         font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
@@ -424,31 +488,31 @@
       }
       select, input[type="number"], input[type="text"] {
         background: var(--im-bg); color: var(--im-text);
-        border: 1px solid var(--im-line); border-radius: 6px;
+        border: 1px solid var(--im-line); border-radius: var(--im-radius);
         padding: 7px 8px; font-size: 13px; font-family: inherit;
       }
       select:focus, input:focus, button:focus {
         outline: 2px solid var(--im-amber); outline-offset: 1px;
       }
-      input[type="range"] {
-        width: 100%; accent-color: var(--im-amber);
-      }
+      input[type="range"] { width: 100%; accent-color: var(--im-amber); }
       .slider-value {
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 11px; color: var(--im-text-dim);
       }
-      .controls-bottom {
-        display: flex; align-items: center; gap: 14px; margin-top: 4px;
-      }
+      .controls-bottom { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
       button.play {
-        background: var(--im-amber); color: #1b1200; border: none;
-        font-weight: 700; letter-spacing: 0.04em; font-size: 13px;
-        border-radius: 8px; padding: 10px 20px; cursor: pointer;
+        background: var(--im-amber); color: #000; border: none;
+        font-weight: 700; letter-spacing: 0.06em; font-size: 13px;
+        border-radius: var(--im-radius); padding: 10px 20px; cursor: pointer;
+        font-family: inherit;
         transition: transform 0.05s ease, filter 0.15s ease;
       }
-      button.play:hover { filter: brightness(1.08); }
+      button.play:hover { filter: brightness(1.1); }
       button.play:active { transform: scale(0.97); }
       button.play.playing { background: transparent; color: var(--im-amber); border: 1px solid var(--im-amber); }
+      :host(:not([data-theme="minimal"])) button.play:not(.playing) {
+        box-shadow: 0 0 14px rgba(57,255,20,0.28);
+      }
       .vol { flex: 1; display: flex; align-items: center; gap: 8px; }
       .vol label { font-size: 10px; color: var(--im-text-dim); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
       .custom-input { display: none; margin-top: 8px; }
@@ -456,11 +520,19 @@
       @media (prefers-reduced-motion: reduce) { .tape .cur { text-shadow: none; } }
     </style>
     <div class="panel">
+      <div class="tabs">
+        <button class="tab active" data-tab="retro">Retro</button>
+        <button class="tab" data-tab="minimal">Minimal</button>
+      </div>
       <div class="eyebrow">
         <span class="title">Irrational Music</span>
         <span class="now" data-el="now">&mdash;</span>
       </div>
       <div class="tape" data-el="tape">&nbsp;</div>
+      <div class="viz-wrap">
+        <canvas class="viz" data-el="viz"></canvas>
+        <div class="viz-scan"></div>
+      </div>
       <div class="custom-input" data-el="customWrap">
         <input type="text" data-el="customDigits" placeholder="Type any digits, e.g. 31415926535..." />
       </div>
@@ -509,12 +581,15 @@
       this.shadowRoot.innerHTML = TEMPLATE;
       this._audioCtx = null;
       this._master = null;
+      this._analyser = null;
       this._composer = null;
       this._gen = null;
       this._playing = false;
       this._nextEventTime = 0; // seconds, in audioCtx time
       this._pendingEvent = null;
       this._schedulerHandle = null;
+      this._animFrame = null;
+      this._vizTheme = 'retro';
       this._recentDigits = [];
     }
 
@@ -572,7 +647,18 @@
       });
       playBtn.addEventListener('click', () => (this._playing ? this.stop() : this.play()));
 
-      this._els = { sourceSel, keySel, scaleSel, tempoInput, offsetInput, volumeInput, playBtn, customDigits, now: $('now'), tape: $('tape') };
+      this._els = { sourceSel, keySel, scaleSel, tempoInput, offsetInput, volumeInput, playBtn, customDigits, now: $('now'), tape: $('tape'), viz: $('viz') };
+
+      this.setAttribute('data-theme', 'retro');
+      this.shadowRoot.querySelectorAll('.tab').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          this.shadowRoot.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          const theme = btn.dataset.tab;
+          this.setAttribute('data-theme', theme);
+          this._vizTheme = theme;
+        });
+      });
 
       if (this.hasAttribute('autoplay')) {
         const startOnce = () => { this.play(); document.removeEventListener('click', startOnce); };
@@ -620,7 +706,11 @@
         this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         this._master = this._audioCtx.createGain();
         this._master.gain.value = (parseInt(this._els.volumeInput.value, 10) / 100) * 0.5;
-        this._master.connect(this._audioCtx.destination);
+        this._analyser = this._audioCtx.createAnalyser();
+        this._analyser.fftSize = 2048;
+        this._analyser.smoothingTimeConstant = 0.85;
+        this._master.connect(this._analyser);
+        this._analyser.connect(this._audioCtx.destination);
       }
       if (this._audioCtx.state === 'suspended') this._audioCtx.resume();
       this._buildComposer();
@@ -630,21 +720,126 @@
       this._playing = true;
       this._els.playBtn.textContent = 'STOP';
       this._els.playBtn.classList.add('playing');
+      this._startViz();
       this._scheduleLoop();
     }
 
     stop() {
       this._playing = false;
       if (this._schedulerHandle) { clearInterval(this._schedulerHandle); this._schedulerHandle = null; }
+      if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
       if (this._els) {
         this._els.playBtn.textContent = 'PLAY';
         this._els.playBtn.classList.remove('playing');
+        const c = this._els.viz;
+        if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height);
       }
     }
 
     setSource(name) {
       this._els.sourceSel.value = SOURCE_OPTIONS.some((o) => o[0] === name) ? name : this._els.sourceSel.value;
       this._restart();
+    }
+
+    _startViz() {
+      const canvas = this._els.viz;
+      const analyser = this._analyser;
+      const bufLen = analyser.fftSize;
+      const timeData = new Uint8Array(bufLen);
+
+      const THEME_COLORS = {
+        retro: {
+          fillTop: 'rgba(57, 255, 20, 0.10)',
+          fillMid: 'rgba(57, 255, 20, 0.32)',
+          fillBot: 'rgba(57, 255, 20, 0.10)',
+          stroke:  'rgba(57, 255, 20, 0.88)',
+          center:  'rgba(57, 255, 20, 0.16)',
+        },
+        minimal: {
+          fillTop: 'rgba(50, 80, 190, 0.05)',
+          fillMid: 'rgba(50, 80, 190, 0.18)',
+          fillBot: 'rgba(50, 80, 190, 0.05)',
+          stroke:  'rgba(50, 80, 190, 0.55)',
+          center:  'rgba(50, 80, 190, 0.12)',
+        },
+      };
+
+      const draw = () => {
+        if (!this._playing) return;
+        this._animFrame = requestAnimationFrame(draw);
+
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        const cssW = rect.width;
+        const cssH = rect.height;
+        const pw = Math.round(cssW * dpr);
+        const ph = Math.round(cssH * dpr);
+        if (canvas.width !== pw || canvas.height !== ph) {
+          canvas.width = pw;
+          canvas.height = ph;
+        }
+
+        analyser.getByteTimeDomainData(timeData);
+
+        const C = THEME_COLORS[this._vizTheme] || THEME_COLORS.retro;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, pw, ph);
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        const w = cssW, h = cssH;
+        const midY = h / 2;
+        const amp = midY - 3;
+        const step = Math.max(1, Math.floor(bufLen / w));
+
+        // ── closed symmetric shape (top waveform + mirrored bottom) ────
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        for (let i = 0; i < bufLen; i += step) {
+          const v = timeData[i] / 128.0 - 1.0;
+          ctx.lineTo((i / bufLen) * w, midY - v * amp);
+        }
+        ctx.lineTo(w, midY);
+        for (let i = bufLen - 1; i >= 0; i -= step) {
+          const v = timeData[i] / 128.0 - 1.0;
+          ctx.lineTo((i / bufLen) * w, midY + v * amp);
+        }
+        ctx.closePath();
+        const fillGrad = ctx.createLinearGradient(0, 0, 0, h);
+        fillGrad.addColorStop(0,   C.fillTop);
+        fillGrad.addColorStop(0.5, C.fillMid);
+        fillGrad.addColorStop(1,   C.fillBot);
+        ctx.fillStyle = fillGrad;
+        ctx.fill();
+
+        // ── outlines ────────────────────────────────────────────────────
+        ctx.strokeStyle = C.stroke;
+        ctx.lineWidth = 1.5;
+        const drawHalf = (sign) => {
+          ctx.beginPath();
+          ctx.moveTo(0, midY);
+          for (let i = 0; i < bufLen; i += step) {
+            const v = timeData[i] / 128.0 - 1.0;
+            ctx.lineTo((i / bufLen) * w, midY - sign * v * amp);
+          }
+          ctx.lineTo(w, midY);
+          ctx.stroke();
+        };
+        drawHalf(1);
+        drawHalf(-1);
+
+        // ── faint center line ───────────────────────────────────────────
+        ctx.beginPath();
+        ctx.moveTo(0, midY);
+        ctx.lineTo(w, midY);
+        ctx.strokeStyle = C.center;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        ctx.restore();
+      };
+
+      draw();
     }
 
     _scheduleLoop() {
@@ -686,8 +881,8 @@
 
     _pushDigitFeedback(ev) {
       this._els.now.textContent = `${pitchLabel(ev.pitch)} \u00b7 ${ev.velocity}`;
-      this._recentDigits.push(ev.pitch % 10);
-      if (this._recentDigits.length > 40) this._recentDigits.shift();
+      this._recentDigits.push(...ev.digits);
+      while (this._recentDigits.length > 40) this._recentDigits.shift();
       const tapeEl = this._els.tape;
       const shown = this._recentDigits.map((d, idx) =>
         idx === this._recentDigits.length - 1 ? `<span class="cur">${d}</span>` : d

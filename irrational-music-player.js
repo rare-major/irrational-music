@@ -367,8 +367,26 @@
 
   const TEMPLATE = `
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Space+Grotesk:wght@500;600;700&display=swap');
       :host {
-        /* === RETRO (default): green phosphor CRT === */
+        /* === EDITORIAL (default): matches vikastomar.life's night/rust palette === */
+        --im-bg: #0b0908;
+        --im-panel: #100d0b;
+        --im-line: rgba(244,237,226,0.14);
+        --im-amber: #c7663e;
+        --im-amber-dim: rgba(199,102,62,0.42);
+        --im-text: #f4ede2;
+        --im-text-dim: rgba(244,237,226,0.5);
+        --im-radius: 0px;
+        --im-panel-radius: 0px;
+        all: initial;
+        display: block;
+        font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system, sans-serif;
+        color: var(--im-text);
+        max-width: 560px;
+      }
+      :host([data-theme="retro"]) {
+        /* === RETRO: green phosphor CRT === */
         --im-bg: #000;
         --im-panel: #060606;
         --im-line: #1a3d1a;
@@ -378,11 +396,7 @@
         --im-text-dim: #156615;
         --im-radius: 0px;
         --im-panel-radius: 3px;
-        all: initial;
-        display: block;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        color: var(--im-text);
-        max-width: 560px;
       }
       :host([data-theme="minimal"]) {
         /* === MINIMAL: light, clean, sans-serif === */
@@ -398,14 +412,27 @@
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
       }
       .panel {
+        position: relative;
         background: var(--im-panel);
         border: 1px solid var(--im-line);
         border-radius: var(--im-panel-radius);
         padding: 18px 20px 16px;
         box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        overflow: hidden;
       }
-      :host(:not([data-theme="minimal"])) .panel {
+      :host([data-theme="retro"]) .panel {
         box-shadow: 0 0 0 1px #1a3d1a, 0 0 40px rgba(57,255,20,0.05), inset 0 0 80px rgba(0,0,0,0.55);
+      }
+      :host(:not([data-theme="retro"]):not([data-theme="minimal"])) .panel {
+        border-color: rgba(199,102,62,0.48);
+        box-shadow: inset 0 0 54px rgba(199,102,62,0.055), 0 18px 40px rgba(22,14,10,0.14);
+      }
+      :host(.is-playing:not([data-theme="retro"]):not([data-theme="minimal"])) .panel {
+        box-shadow: inset 0 0 68px rgba(199,102,62,0.105), 0 20px 44px rgba(22,14,10,0.18);
+      }
+      :host(:not([data-theme="retro"]):not([data-theme="minimal"])) .panel::before {
+        content: ""; position: absolute; inset: 0 0 auto; height: 3px;
+        background: var(--im-amber);
       }
       /* ── tabs ─────────────────────────────────────────────── */
       .tabs {
@@ -422,7 +449,7 @@
         transition: color 0.15s, border-color 0.15s;
       }
       .tab.active { color: var(--im-amber); border-bottom-color: var(--im-amber); }
-      :host(:not([data-theme="minimal"])) .tab.active {
+      :host([data-theme="retro"]) .tab.active {
         text-shadow: 0 0 8px rgba(57,255,20,0.55);
       }
       /* ── eyebrow ──────────────────────────────────────────── */
@@ -434,13 +461,34 @@
         font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
         color: var(--im-text-dim); font-weight: 600;
       }
+      :host(:not([data-theme="retro"]):not([data-theme="minimal"])) .eyebrow .title {
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 16px; letter-spacing: -0.01em; text-transform: none;
+        font-weight: 500; color: var(--im-text);
+      }
       .eyebrow .now {
+        position: relative;
         font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
         font-size: 12px; color: var(--im-amber);
         min-width: 90px; text-align: right;
       }
-      :host(:not([data-theme="minimal"])) .eyebrow .now {
+      :host([data-theme="retro"]) .eyebrow .now {
         text-shadow: 0 0 8px rgba(57,255,20,0.5);
+      }
+      :host(:not([data-theme="retro"]):not([data-theme="minimal"])) .eyebrow .now {
+        font-family: "Space Grotesk", sans-serif;
+        letter-spacing: 0.14em; font-weight: 600;
+      }
+      :host(.is-playing:not([data-theme="retro"]):not([data-theme="minimal"])) .eyebrow .now::before {
+        content: ""; position: absolute; left: -12px; top: 50%;
+        width: 5px; height: 5px; border-radius: 50%;
+        background: var(--im-amber); box-shadow: 0 0 9px var(--im-amber);
+        transform: translateY(-50%);
+        animation: im-live-pulse 1.3s ease-in-out infinite;
+      }
+      @keyframes im-live-pulse {
+        0%, 100% { opacity: 0.45; transform: translateY(-50%) scale(0.82); }
+        50% { opacity: 1; transform: translateY(-50%) scale(1.18); }
       }
       /* ── digit tape ───────────────────────────────────────── */
       .tape {
@@ -456,8 +504,11 @@
         box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
       }
       .tape .cur { color: var(--im-amber); }
-      :host(:not([data-theme="minimal"])) .tape .cur {
+      :host([data-theme="retro"]) .tape .cur {
         text-shadow: 0 0 10px rgba(57,255,20,0.7);
+      }
+      :host(:not([data-theme="retro"]):not([data-theme="minimal"])) .tape .cur {
+        text-shadow: 0 0 8px rgba(199,102,62,0.5);
       }
       /* ── visualiser ───────────────────────────────────────── */
       .viz-wrap { position: relative; margin-bottom: 14px; }
@@ -478,7 +529,7 @@
         );
         display: none;
       }
-      :host(:not([data-theme="minimal"])) .viz-scan { display: block; }
+      :host([data-theme="retro"]) .viz-scan { display: block; }
       /* ── controls ─────────────────────────────────────────── */
       .row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
       .field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 90px; }
@@ -501,7 +552,7 @@
       }
       .controls-bottom { display: flex; align-items: center; gap: 14px; margin-top: 4px; }
       button.play {
-        background: var(--im-amber); color: #000; border: none;
+        background: var(--im-amber); color: var(--im-panel); border: none;
         font-weight: 700; letter-spacing: 0.06em; font-size: 13px;
         border-radius: var(--im-radius); padding: 10px 20px; cursor: pointer;
         font-family: inherit;
@@ -510,7 +561,7 @@
       button.play:hover { filter: brightness(1.1); }
       button.play:active { transform: scale(0.97); }
       button.play.playing { background: transparent; color: var(--im-amber); border: 1px solid var(--im-amber); }
-      :host(:not([data-theme="minimal"])) button.play:not(.playing) {
+      :host([data-theme="retro"]) button.play:not(.playing) {
         box-shadow: 0 0 14px rgba(57,255,20,0.28);
       }
       .vol { flex: 1; display: flex; align-items: center; gap: 8px; }
@@ -521,7 +572,8 @@
     </style>
     <div class="panel">
       <div class="tabs">
-        <button class="tab active" data-tab="retro">Retro</button>
+        <button class="tab active" data-tab="editorial">Editorial</button>
+        <button class="tab" data-tab="retro">Retro</button>
         <button class="tab" data-tab="minimal">Minimal</button>
       </div>
       <div class="eyebrow">
@@ -589,7 +641,7 @@
       this._pendingEvent = null;
       this._schedulerHandle = null;
       this._animFrame = null;
-      this._vizTheme = 'retro';
+      this._vizTheme = 'editorial';
       this._recentDigits = [];
     }
 
@@ -649,7 +701,7 @@
 
       this._els = { sourceSel, keySel, scaleSel, tempoInput, offsetInput, volumeInput, playBtn, customDigits, now: $('now'), tape: $('tape'), viz: $('viz') };
 
-      this.setAttribute('data-theme', 'retro');
+      this.setAttribute('data-theme', 'editorial');
       this.shadowRoot.querySelectorAll('.tab').forEach((btn) => {
         btn.addEventListener('click', () => {
           this.shadowRoot.querySelectorAll('.tab').forEach((b) => b.classList.remove('active'));
@@ -720,6 +772,7 @@
       this._playing = true;
       this._els.playBtn.textContent = 'STOP';
       this._els.playBtn.classList.add('playing');
+      this.classList.add('is-playing');
       this._startViz();
       this._scheduleLoop();
     }
@@ -728,6 +781,7 @@
       this._playing = false;
       if (this._schedulerHandle) { clearInterval(this._schedulerHandle); this._schedulerHandle = null; }
       if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
+      this.classList.remove('is-playing');
       if (this._els) {
         this._els.playBtn.textContent = 'PLAY';
         this._els.playBtn.classList.remove('playing');
@@ -748,6 +802,13 @@
       const timeData = new Uint8Array(bufLen);
 
       const THEME_COLORS = {
+        editorial: {
+          fillTop: 'rgba(199, 102, 62, 0.06)',
+          fillMid: 'rgba(199, 102, 62, 0.22)',
+          fillBot: 'rgba(199, 102, 62, 0.06)',
+          stroke:  'rgba(199, 102, 62, 0.85)',
+          center:  'rgba(244, 237, 226, 0.14)',
+        },
         retro: {
           fillTop: 'rgba(57, 255, 20, 0.10)',
           fillMid: 'rgba(57, 255, 20, 0.32)',
@@ -781,7 +842,7 @@
 
         analyser.getByteTimeDomainData(timeData);
 
-        const C = THEME_COLORS[this._vizTheme] || THEME_COLORS.retro;
+        const C = THEME_COLORS[this._vizTheme] || THEME_COLORS.editorial;
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, pw, ph);
         ctx.save();
